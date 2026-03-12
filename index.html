@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantex Master | V13 Full Schema</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+    <style>
+        :root {
+            --bg: #05070a; --nav: #0d1117; --blue: #3773f5; --gold: #f3ba2f;
+            --green: #00ffa3; --red: #ff3e3e; --text: #e6edf3; --dim: #8b949e; --border: #2b2f36;
+        }
+        body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; }
+        
+        /* Navigation & Hamburger */
+        #sideMenu { position: fixed; left: -280px; top: 0; width: 280px; height: 100%; background: var(--nav); border-right: 1px solid var(--border); z-index: 3000; transition: 0.3s; padding-top: 60px; }
+        #sideMenu.open { left: 0; }
+        .menu-item { padding: 15px 25px; display: flex; align-items: center; gap: 15px; cursor: pointer; color: var(--text); }
+        .hangar-nav { background: var(--nav); border-bottom: 1px solid var(--border); display: flex; overflow-x: auto; }
+        .tab-btn { padding: 15px 18px; border: none; background: transparent; color: var(--dim); font-weight: bold; font-size: 0.7rem; cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; }
+        .tab-btn.active { color: var(--blue); border-bottom-color: var(--blue); }
+
+        /* UI Panels */
+        .view-panel { display: none; height: calc(100vh - 120px); overflow-y: auto; padding: 15px; }
+        .view-panel.active { display: block; }
+        .control-cluster { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 15px; }
+        select { background: #000; border: 1px solid var(--border); color: #fff; padding: 8px; border-radius: 6px; width: 100%; font-size: 0.75rem; }
+        
+        /* Probability Display */
+        .glow-box { border: 1px solid var(--border); border-radius: 12px; padding: 25px; text-align: center; transition: 0.5s; background: radial-gradient(circle at center, rgba(55,115,245,0.05) 0%, transparent 100%); }
+        .safe-entry { border-color: var(--green); box-shadow: 0 0 25px rgba(0, 255, 163, 0.2); }
+        .pct-val { font-size: 3rem; font-weight: 900; letter-spacing: -2px; }
+        
+        /* History Sub-Hangars */
+        .sub-nav { display: flex; gap: 5px; margin-bottom: 15px; background: #000; padding: 5px; border-radius: 8px; }
+        .sub-btn { flex: 1; padding: 10px; border: none; background: transparent; color: var(--dim); font-size: 0.6rem; cursor: pointer; border-radius: 4px; }
+        .sub-btn.active { background: var(--blue); color: #fff; }
+    </style>
+</head>
+<body>
+
+    <div id="sideMenu">
+        <div class="menu-item" onclick="switchEnv('DTrader')"><i class="fas fa-chart-line"></i> DTrader</div>
+        <div class="menu-item" onclick="switchEnv('DBot')"><i class="fas fa-robot"></i> DBot</div>
+        <div class="menu-item" onclick="switchEnv('SmartTrader')"><i class="fas fa-brain"></i> SmartTrader</div>
+        <div class="menu-item" onclick="toggleTheme()"><i class="fas fa-moon"></i> Dark Mode</div>
+        <div style="height:1px; background:var(--border); margin:20px;"></div>
+        <div class="menu-item" onclick="location.reload()" style="color:var(--red)"><i class="fas fa-power-off"></i> Logout</div>
+    </div>
+
+    <header style="background:var(--nav); padding:0 20px; display:flex; justify-content:space-between; align-items:center; height:55px; border-bottom:1px solid var(--border);">
+        <i class="fas fa-bars" onclick="toggleMenu()" style="cursor:pointer; font-size: 1.2rem;"></i>
+        <div id="balanceDisp" style="color:var(--green); font-weight:bold; font-family: monospace;">$0.00</div>
+    </header>
+
+    <nav class="hangar-nav">
+        <button class="tab-btn active" onclick="switchTab('ai-engine', this)">AI_CONFIDENCE</button>
+        <button class="tab-btn" onclick="switchTab('dcircles', this)">D_CIRCLES</button>
+        <button class="tab-btn" onclick="switchTab('charts', this)">CHARTS</button>
+        <button class="tab-btn" onclick="switchTab('history', this)">HISTORY</button>
+    </nav>
+
+    <div id="main-content">
+        <div id="ai-engine" class="view-panel active">
+            <div class="control-cluster">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+                    <select class="mkt-sync" id="mktSelect" onchange="Kernel.updateMarket(this.value)">
+                        <optgroup label="VOLATILITY 1S">
+                            <option value="1HZ10V">Vol 10 (1s)</option><option value="1HZ100V">Vol 100 (1s)</option>
+                            <option value="1HZ15V">Vol 15 (1s)</option><option value="1HZ30V">Vol 30 (1s)</option>
+                        </optgroup>
+                        <optgroup label="CRASH/BOOM">
+                            <option value="BOOM300">Boom 300</option><option value="CRASH300">Crash 300</option>
+                            <option value="BOOM150">Boom 150</option><option value="CRASH150">Crash 150</option>
+                        </optgroup>
+                        </select>
+                    <select class="type-sync" id="typeSelect" onchange="Kernel.updateType(this.value)">
+                        <option value="CALL/PUT">Rise / Fall</option>
+                        <option value="ONETOUCH/NOTOUCH">Touch / No Touch</option>
+                        <option value="DIGITOVER/DIGITUNDER">Over / Under</option>
+                        <option value="DIGITEVEN/DIGITODD">Even / Odd</option>
+                        <option value="MATCH/DIFF">Matches / Differs</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="glow-box" id="glowBox">
+                <div style="margin-bottom:10px; font-size:0.6rem; color:var(--blue); font-weight:bold;" id="analysisLabel">MOMENTUM ANALYSIS</div>
+                <div class="pct-val" style="display:flex; justify-content:center; gap:25px;">
+                    <span id="pctUp" style="color:var(--green)">0%</span>
+                    <span id="pctDown" style="color:var(--red)">0%</span>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:20px;">
+                    <button class="btn-buy" style="background:var(--green); border:none; padding:15px; border-radius:8px; font-weight:bold;" onclick="Kernel.execute('UP')">PURCHASE UP</button>
+                    <button class="btn-buy" style="background:var(--red); color:white; border:none; padding:15px; border-radius:8px; font-weight:bold;" onclick="Kernel.execute('DOWN')">PURCHASE DOWN</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="dcircles" class="view-panel">
+            <div id="digitGrid" style="display:grid; grid-template-columns: repeat(5,1fr); gap:8px;"></div>
+        </div>
+
+        <div id="history" class="view-panel">
+            <div class="sub-nav">
+                <button class="sub-btn active" onclick="switchSub('h-sum', this)">SUMMARY</button>
+                <button class="sub-btn" onclick="switchSub('h-trans', this)">TRANSACTIONS</button>
+                <button class="sub-btn" onclick="switchSub('h-jour', this)">JOURNALS</button>
+            </div>
+            <div id="h-sum" class="sub-hangar active">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                    <div style="background:var(--nav); padding:20px; border-radius:10px; text-align:center;">
+                        <small>PROFIT</small><div id="sumProfit" style="font-size:1.5rem; color:var(--green)">$0.00</div>
+                    </div>
+                    <div style="background:var(--nav); padding:20px; border-radius:10px; text-align:center;">
+                        <small>WIN RATE</small><div id="sumWin" style="font-size:1.5rem; color:var(--blue)">0%</div>
+                    </div>
+                </div>
+            </div>
+            <div id="h-trans" class="sub-hangar" style="display:none;">
+                <table style="width:100%; font-size:0.7rem;"><tbody id="transBody"></tbody></table>
+            </div>
+            <div id="h-jour" class="sub-hangar" style="display:none;">
+                <div id="journalLogs" style="font-size:0.6rem; color:var(--dim); font-family:monospace;"></div>
+            </div>
+        </div>
+    </div>
+
+    <footer style="position:fixed; bottom:0; width:100%; background:var(--nav); padding:10px; border-top:1px solid var(--border); display:flex; gap:10px;">
+        <input type="password" id="apiToken" placeholder="Deriv API Token..." style="flex:1; background:#000; border:1px solid var(--border); color:#fff; padding:8px; border-radius:5px;">
+        <button onclick="Kernel.connect()" style="background:var(--blue); color:white; border:none; padding:10px 15px; border-radius:5px; font-weight:bold;">CONNECT</button>
+    </footer>
+
+    <script>
+        const Kernel = {
+            ws: null, history: [], trades: [], symbol: '1HZ100V', type: 'CALL/PUT',
+            connect() {
+                const token = document.getElementById('apiToken').value;
+                this.ws = new WebSocket('wss://ws.binaryws.com/websockets/v3?app_id=1089');
+                this.ws.onopen = () => this.ws.send(JSON.stringify({authorize: token}));
+                this.ws.onmessage = (m) => this.handle(JSON.parse(m.data));
+            },
+            updateMarket(s) { 
+                this.symbol = s; this.history = []; 
+                if(this.ws) { this.ws.send(JSON.stringify({forget_all: "ticks"})); this.ws.send(JSON.stringify({ticks: s, subscribe: 1})); }
+            },
+            updateType(t) { this.type = t; this.calculate(); },
+            handle(data) {
+                if(data.msg_type === 'tick') this.processTick(data.tick);
+                if(data.msg_type === 'balance') document.getElementById('balanceDisp').innerText = "$" + data.balance.balance;
+                if(data.msg_type === 'authorize') { this.ws.send(JSON.stringify({ticks: this.symbol, subscribe:1, balance:1})); this.ws.send(JSON.stringify({proposal_open_contract:1, subscribe:1})); }
+                if(data.msg_type === 'proposal_open_contract') this.updateAccounting(data.proposal_open_contract);
+                if(data.msg_type === 'buy') this.logTrans(data.buy);
+            },
+            processTick(tick) {
+                const digit = parseInt(tick.quote.toString().slice(-1));
+                this.history.push({digit, price: tick.quote});
+                if(this.history.length > 50) this.history.shift();
+                
+                // D_CIRCLES Sync
+                document.querySelectorAll('.digit-cell').forEach(c => c.classList.remove('active'));
+                document.getElementById(`dc-${digit}`)?.classList.add('active');
+                
+                this.calculate();
+            },
+            calculate() {
+                let u=0, d=0; const dg = this.history.map(x => x.digit);
+                const label = document.getElementById('analysisLabel');
+
+                // DIFFERENTIATED LOGIC BASED ON TYPE
+                if(this.type.includes('EVEN')) {
+                    label.innerText = "DIGIT PARITY (EVEN vs ODD)";
+                    u = (dg.filter(x => x % 2 === 0).length / dg.length) * 100; d = 100 - u;
+                } else if(this.type.includes('OVER')) {
+                    label.innerText = "DIGIT THRESHOLD (OVER 4 vs UNDER 5)";
+                    u = (dg.filter(x => x > 4).length / dg.length) * 100; d = 100 - u;
+                } else if(this.type.includes('MATCH')) {
+                    label.innerText = "DIGIT RECURRENCE (MATCH vs DIFF)";
+                    u = (dg.filter(x => x === dg[dg.length-1]).length / dg.length) * 100; d = 100 - u;
+                } else {
+                    label.innerText = "PRICE MOMENTUM (RISE vs FALL)";
+                    let r=0; for(let i=1; i<this.history.length; i++) if(this.history[i].price > this.history[i-1].price) r++;
+                    u = (r / (this.history.length-1)) * 100; d = 100 - u;
+                }
+
+                document.getElementById('pctUp').innerText = Math.round(u) + "%";
+                document.getElementById('pctDown').innerText = Math.round(d) + "%";
+                document.getElementById('glowBox').className = (u > 65 || d > 65) ? 'glow-box safe-entry' : 'glow-box';
+            },
+            execute(dir) {
+                const t = this.type.split('/');
+                this.ws.send(JSON.stringify({ buy: 1, price: 0.35, parameters: { amount: 0.35, basis: 'stake', symbol: this.symbol, duration: 5, duration_unit: 't', contract_type: dir==='UP'?t[0]:(t[1]||t[0]) } }));
+            },
+            logTrans(b) {
+                document.getElementById('transBody').innerHTML = `<tr><td>${b.contract_id}</td><td>${b.buy_price}</td><td id="res-${b.contract_id}">...</td></tr>` + document.getElementById('transBody').innerHTML;
+                this.journal(`Entry: ${b.contract_id} at $${b.buy_price}`);
+            },
+            updateAccounting(c) {
+                if(c.is_sold) {
+                    const el = document.getElementById(`res-${c.contract_id}`);
+                    if(el) { el.innerText = c.profit.toFixed(2); el.style.color = c.profit > 0 ? 'var(--green)' : 'var(--red)'; }
+                    this.trades.push(c.profit);
+                    this.journal(`Exit: ${c.contract_id} | Profit: ${c.profit}`);
+                    this.updateStats();
+                }
+            },
+            updateStats() {
+                const p = this.trades.reduce((a,b) => a+b, 0);
+                document.getElementById('sumProfit').innerText = "$" + p.toFixed(2);
+                document.getElementById('sumWin').innerText = Math.round((this.trades.filter(x=>x>0).length / this.trades.length)*100) + "%";
+            },
+            journal(m) {
+                document.getElementById('journalLogs').innerHTML = `[${new Date().toLocaleTimeString()}] ${m}<br>` + document.getElementById('journalLogs').innerHTML;
+            }
+        };
+
+        function toggleMenu() { document.getElementById('sideMenu').classList.toggle('open'); }
+        function switchTab(id, b) {
+            document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(id).classList.add('active'); b.classList.add('active');
+        }
+        function switchSub(id, b) {
+            document.querySelectorAll('.sub-hangar').forEach(h => h.style.display = 'none');
+            document.querySelectorAll('.sub-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(id).style.display = 'block'; b.classList.add('active');
+        }
+        window.onload = () => {
+            for(let i=0; i<10; i++) document.getElementById('digitGrid').innerHTML += `<div id="dc-${i}" class="digit-cell" style="padding:15px; border:1px solid var(--border); border-radius:8px; text-align:center;">${i}</div>`;
+        };
+    </script>
+</body>
+</html>
