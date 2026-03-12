@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml" is_dbot="true" collection="false">
+  <variables>
+    <variable id="v_stake">stake</variable>
+    <variable id="v_base">base_stake</variable>
+    <variable id="v_loss">max_loss</variable>
+  </variables>
+  <block type="trade_definition" id="trade_def" x="0" y="0">
+    <statement name="TRADE_OPTIONS">
+      <block type="trade_definition_market">
+        <field name="MARKET_LIST">synthetic_index</field>
+        <field name="SUBMARKET_LIST">random_index</field>
+        <field name="SYMBOL_LIST">R_100</field>
+        <next>
+          <block type="trade_definition_tradetype">
+            <field name="TRADETYPECAT_LIST">digits</field>
+            <field name="TRADETYPE_LIST">evenodd</field>
+            <next>
+              <block type="trade_definition_candleinterval">
+                <field name="CANDLEINTERVAL_LIST">60</field>
+                <next>
+                  <block type="trade_definition_restartonerror">
+                    <field name="RESTARTONERROR">TRUE</field>
+                  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+    <statement name="INITIALIZATION">
+      <block type="variables_set">
+        <field name="VAR" id="v_base">base_stake</field>
+        <value name="VALUE">
+          <block type="math_number">
+            <field name="NUM">1</field>
+          </block>
+        </value>
+        <next>
+          <block type="variables_set">
+            <field name="VAR" id="v_stake">stake</field>
+            <value name="VALUE">
+              <block type="variables_get">
+                <field name="VAR" id="v_base">base_stake</field>
+              </block>
+            </value>
+            <next>
+              <block type="variables_set">
+                <field name="VAR" id="v_loss">max_loss</field>
+                <value name="VALUE">
+                  <block type="math_number">
+                    <field name="NUM">100</field>
+                  </block>
+                </value>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+    <statement name="SUBMARKET">
+      <block type="trade_definition_tradeoptions">
+        <field name="DURATIONTYPE_LIST">t</field>
+        <value name="DURATION">
+          <block type="math_number">
+            <field name="NUM">1</field>
+          </block>
+        </value>
+        <value name="AMOUNT">
+          <block type="variables_get">
+            <field name="VAR" id="v_stake">stake</field>
+          </block>
+        </value>
+      </block>
+    </statement>
+  </block>
+
+  <block type="before_purchase" x="50" y="400">
+    <statement name="BEFOREPURCHASE_STACK">
+      <block type="mon_purchase">
+        <field name="PURCHASE_LIST">DIGITEVEN</field>
+      </block>
+    </statement>
+  </block>
+
+  <block type="after_purchase" x="450" y="400">
+    <statement name="AFTERPURCHASE_STACK">
+      <block type="controls_if">
+        <value name="IF0">
+          <block type="logic_compare">
+            <field name="OP">LTE</field>
+            <value name="A">
+              <block type="get_total_profit"/>
+            </value>
+            <value name="B">
+              <block type="math_arithmetic">
+                <field name="OP">MINUS</field>
+                <value name="A">
+                  <block type="math_number">
+                    <field name="NUM">0</field>
+                  </block>
+                </value>
+                <value name="B">
+                  <block type="variables_get">
+                    <field name="VAR" id="v_loss">max_loss</field>
+                  </block>
+                </value>
+              </block>
+            </value>
+          </block>
+        </value>
+        <statement name="DO0">
+          <block type="bot_stop"/>
+        </statement>
+        <next>
+          <block type="controls_if">
+            <mutation else="1"></mutation>
+            <value name="IF0">
+              <block type="contract_check_result">
+                <field name="CHECK_RESULT">loss</field>
+              </block>
+            </value>
+            <statement name="DO0">
+              <block type="variables_set">
+                <field name="VAR" id="v_stake">stake</field>
+                <value name="VALUE">
+                  <block type="math_arithmetic">
+                    <field name="OP">MULTIPLY</field>
+                    <value name="A">
+                      <block type="variables_get">
+                        <field name="VAR" id="v_stake">stake</field>
+                      </block>
+                    </value>
+                    <value name="B">
+                      <block type="math_number">
+                        <field name="NUM">1.1</field>
+                      </block>
+                    </value>
+                  </block>
+                </value>
+              </block>
+            </statement>
+            <statement name="ELSE">
+              <block type="variables_set">
+                <field name="VAR" id="v_stake">stake</field>
+                <value name="VALUE">
+                  <block type="variables_get">
+                    <field name="VAR" id="v_base">base_stake</field>
+                  </block>
+                </value>
+              </block>
+            </statement>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+</xml>
