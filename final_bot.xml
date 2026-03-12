@@ -6,6 +6,8 @@
     <variable id="v3">Initial Amount</variable>
     <variable id="v4">Expected Profit</variable>
     <variable id="v5">Win Amount</variable>
+    <variable id="v6">Total Loss</variable>
+    <variable id="v7">Current Balance</variable>
   </variables>
   <block type="trade_definition" id="main" x="0" y="0">
     <statement name="TRADE_OPTIONS">
@@ -47,6 +49,18 @@
                   <block type="variables_set" id="i4">
                     <field name="VAR" id="v5">Win Amount</field>
                     <value name="VALUE"><block type="math_number" id="n3"><field name="NUM">1</field></block></value>
+                    <next>
+                      <block type="variables_set" id="i5">
+                        <field name="VAR" id="v6">Total Loss</field>
+                        <value name="VALUE"><block type="math_number" id="n4"><field name="NUM">0</field></block></value>
+                        <next>
+                          <block type="variables_set" id="i6">
+                            <field name="VAR" id="v7">Current Balance</field>
+                            <value name="VALUE"><block type="math_number" id="n5"><field name="NUM">1000</field></block></value>
+                          </block>
+                        </next>
+                      </block>
+                    </next>
                   </block>
                 </next>
               </block>
@@ -85,7 +99,7 @@
         <value name="IF0">
           <block type="logic_compare" id="check1">
             <field name="OP">LT</field>
-            <value name="A"><block type="variables_get" id="g_loss"><field name="VAR" id="v3">Initial Amount</field></block></value>
+            <value name="A"><block type="variables_get" id="g_loss"><field name="VAR" id="v6">Total Loss</field></block></value>
             <value name="B"><block type="variables_get" id="g_max"><field name="VAR" id="v2">Max Acceptable Loss</field></block></value>
           </block>
         </value>
@@ -95,30 +109,54 @@
             <value name="IF0"><block type="contract_check_result" id="loss"><field name="CHECK_RESULT">loss</field></block></value>
             <statement name="DO0">
               <block type="variables_set" id="s1">
-                <field name="VAR" id="v1">Next Trade Condition</field>
-                <value name="VALUE"><block type="text" id="t_o"><field name="TEXT">Odd</field></block></value>
+                <field name="VAR" id="v6">Total Loss</field>
+                <value name="VALUE">
+                  <block type="math_arithmetic" id="add_loss">
+                    <field name="OP">ADD</field>
+                    <value name="A"><block type="variables_get" id="gs_loss"><field name="VAR" id="v6">Total Loss</field></block></value>
+                    <value name="B"><block type="variables_get" id="gs_amt"><field name="VAR" id="v3">Initial Amount</field></block></value>
+                  </block>
+                </value>
                 <next>
-                  <block type="variables_set" id="m1">
-                    <field name="VAR" id="v3">Initial Amount</field>
-                    <value name="VALUE">
-                      <block type="math_arithmetic" id="mult">
-                        <field name="OP">MULTIPLY</field>
-                        <value name="A"><block type="variables_get" id="gs1"><field name="VAR" id="v3">Initial Amount</field></block></value>
-                        <value name="B"><block type="math_number" id="mn1"><field name="NUM">1.1</field></block></value>
+                  <block type="variables_set" id="s2">
+                    <field name="VAR" id="v1">Next Trade Condition</field>
+                    <value name="VALUE"><block type="text" id="t_o"><field name="TEXT">Odd</field></block></value>
+                    <next>
+                      <block type="variables_set" id="m1">
+                        <field name="VAR" id="v3">Initial Amount</field>
+                        <value name="VALUE">
+                          <block type="math_arithmetic" id="mult">
+                            <field name="OP">MULTIPLY</field>
+                            <value name="A"><block type="variables_get" id="gs1"><field name="VAR" id="v3">Initial Amount</field></block></value>
+                            <value name="B"><block type="math_number" id="mn1"><field name="NUM">1.1</field></block></value>
+                          </block>
+                        </value>
                       </block>
-                    </value>
+                    </next>
                   </block>
                 </next>
               </block>
             </statement>
             <statement name="ELSE">
-              <block type="variables_set" id="s2">
+              <block type="variables_set" id="s3">
                 <field name="VAR" id="v1">Next Trade Condition</field>
                 <value name="VALUE"><block type="text" id="te2"><field name="TEXT">Even</field></block></value>
                 <next>
-                  <block type="variables_set" id="reset">
-                    <field name="VAR" id="v3">Initial Amount</field>
-                    <value name="VALUE"><block type="variables_get" id="gw2"><field name="VAR" id="v5">Win Amount</field></block></value>
+                  <block type="variables_set" id="s4">
+                    <field name="VAR" id="v7">Current Balance</field>
+                    <value name="VALUE">
+                      <block type="math_arithmetic" id="add_win">
+                        <field name="OP">ADD</field>
+                        <value name="A"><block type="variables_get" id="gb1"><field name="VAR" id="v7">Current Balance</field></block></value>
+                        <value name="B"><block type="variables_get" id="gw1"><field name="VAR" id="v5">Win Amount</field></block></value>
+                      </block>
+                    </value>
+                    <next>
+                      <block type="variables_set" id="reset">
+                        <field name="VAR" id="v3">Initial Amount</field>
+                        <value name="VALUE"><block type="variables_get" id="gw2"><field name="VAR" id="v5">Win Amount</field></block></value>
+                      </block>
+                    </next>
                   </block>
                 </next>
               </block>
